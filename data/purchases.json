@@ -1,0 +1,4 @@
+[
+    { "purchaseId": 1001, "farmerId": 1, "date": "2024-12-14T16:29:28.547Z", "category":"Organic","quantity": 1000, "pricePerKg": 5.0, "totalCost": 5000 },
+    { "purchaseId": 1002, "farmerId": 2, "date": "2024-12-13T12:34:56.789Z","category":"Fresh", "quantity": 2000, "pricePerKg": 4.5, "totalCost": 9000 }
+]

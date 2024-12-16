@@ -1,0 +1,7 @@
+[
+    { "id": "farmers", "title": "Manage Farmers", "action": "loadFarmers" },
+    { "id": "purchases", "title": "Manage Purchases", "action": "loadPurchases" },
+    { "id": "inventory", "title": "Inventory Management", "action": "loadInventory" },
+    { "id": "sales", "title": "Sales Management", "action": "loadSales" },
+    { "id": "reports", "title": "Generate Reports", "action": "generateReports" }
+]

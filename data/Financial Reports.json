@@ -1,0 +1,10 @@
+[
+    {
+        "reportId": 1,
+        "date": "2024-12-31",
+        "totalExpenses": 14000,
+        "totalRevenue": 5000,
+        "tax": 500,
+        "netProfit": 3100
+    }
+]

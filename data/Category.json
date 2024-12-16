@@ -1,0 +1,9 @@
+[
+    { "id": 1, "name": "Small", "weight": 100,"pricePerUnit": 2.5 ,"stock":0},
+    { "id": 2, "name": "Medium", "weight": 250,"pricePerUnit": 2.5,"stock":0 },
+    { "id": 3, "name": "Large", "weight": 500,"pricePerUnit": 2.5,"stock":0 },
+    { "id": 4, "name": "Extra Large", "weight": 1000,"pricePerUnit": 2.5,"stock":0},
+    { "id": 5, "name": "Family Pack", "weight": 2000,"pricePerUnit": 2.5,"stock":0},
+    { "id": 6, "name": "Bulk Pack", "weight": 5000,"pricePerUnit": 2.5,"stock":0}
+
+]
