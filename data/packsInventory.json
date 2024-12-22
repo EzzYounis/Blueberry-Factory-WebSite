@@ -1,0 +1,113 @@
+[
+    [
+        {
+            "IPID": 1,
+            "itemId": 1,
+            "packId": 1,
+            "stock": 0
+        },
+        {
+            "IPID": 2,
+            "itemId": 1,
+            "packId": 2,
+            "stock": 0
+        },
+        {
+            "IPID": 3,
+            "itemId": 1,
+            "packId": 3,
+            "stock": 50
+        },
+        {
+            "IPID": 4,
+            "itemId": 1,
+            "packId": 4,
+            "stock": 50
+        },
+        {
+            "IPID": 5,
+            "itemId": 1,
+            "packId": 5,
+            "stock": 0
+        },
+        {
+            "IPID": 6,
+            "itemId": 1,
+            "packId": 6,
+            "stock": 0
+        },
+        {
+            "IPID": 7,
+            "itemId": 2,
+            "packId": 1,
+            "stock": 0
+        },
+        {
+            "IPID": 8,
+            "itemId": 2,
+            "packId": 2,
+            "stock": 0
+        },
+        {
+            "IPID": 9,
+            "itemId": 2,
+            "packId": 3,
+            "stock": 0
+        },
+        {
+            "IPID": 10,
+            "itemId": 2,
+            "packId": 4,
+            "stock": 0
+        },
+        {
+            "IPID": 11,
+            "itemId": 2,
+            "packId": 5,
+            "stock": 0
+        },
+        {
+            "IPID": 12,
+            "itemId": 2,
+            "packId": 6,
+            "stock": 0
+        },
+        {
+            "IPID": 13,
+            "itemId": 3,
+            "packId": 1,
+            "stock": 0
+        },
+        {
+            "IPID": 14,
+            "itemId": 3,
+            "packId": 2,
+            "stock": 0
+        },
+        {
+            "IPID": 15,
+            "itemId": 3,
+            "packId": 3,
+            "stock": 0
+        },
+        {
+            "IPID": 16,
+            "itemId": 3,
+            "packId": 4,
+            "stock": 0
+        },
+        {
+            "IPID": 17,
+            "itemId": 3,
+            "packId": 5,
+            "stock": 0
+        },
+        {
+            "IPID": 18,
+            "itemId": 3,
+            "packId": 6,
+            "stock": 0
+        }
+    ]
+
+]

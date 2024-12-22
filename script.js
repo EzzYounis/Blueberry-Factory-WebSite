@@ -6,42 +6,84 @@ let farmerslist = [];
 let purchaseslist=[];
 let inventory=[];
 let Categories=[];
-let Orders;
+let Orders=[];
+let PackInventory=[];
 
-
-async function fetchData(filePath) {
-    console.log("hi");
-    
+async function fetchData(filePath) {    
         const response = await fetch(filePath); 
         const data=await response.json()
-        console.log(data)
         return await data;
-           
-   
-    
+}
+
+function saveToLocalstorage(){
+    localStorage.setItem("farmerlist",JSON.stringify(farmerslist));
+    localStorage.setItem("purchaseslist",JSON.stringify(purchaseslist));
+    localStorage.setItem("inventory",JSON.stringify(inventory));
+    localStorage.setItem("Categories",JSON.stringify(Categories));
+    localStorage.setItem("Orders",JSON.stringify(Orders));
+    localStorage.setItem("PackInventory",JSON.stringify(PackInventory));
+}
+function loadFromLocalStorage(){
+    farmerslist=JSON.parse(localStorage.getItem("farmerlist"))||[];
+    purchaseslist=JSON.parse(localStorage.getItem("purchaseslist"))||[];
+    inventory=JSON.parse(localStorage.getItem("inventory"))||[];
+    Categories=JSON.parse(localStorage.getItem("Categories"))||[];
+    Orders=JSON.parse(localStorage.getItem("Orders"))||[];
+    PackInventory=JSON.parse(localStorage.getItem("PackInventory"))||[];
+}
+async function updateStorage(){
+     
+    saveToLocalstorage()
+    loadFromLocalStorage()
 }
 
 async function loadData() {
-   await fetchData("./data/farmers.json").then(data => {data.forEach(farmer=>farmerslist.push(farmer))})
-   await fetchData("./data/purchases.json").then(data => {data.forEach(purchases=>purchaseslist.push(purchases))})
+    await fetchData("/orders.json").then(data =>  {data.forEach(order=>Orders.push(order))})
+   await fetchData("./data/packsInventory.json").then(data =>  {data.forEach(pi=>PackInventory.push(pi))})
+   await fetchData("./data/farmers.json").then(data =>  {data.forEach(farmer=>farmerslist.push(farmer))})
+   await fetchData("./data/purchases.json").then(data =>  {data.forEach(purchases=>purchaseslist.push(purchases))})
    await fetchData("./data/inventory.json").then(data => {data.forEach(inventoryI=>inventory.push(inventoryI))})
    await fetchData("./data/Category.json").then(data => {data.forEach(category=>Categories.push(category))})
-   await fetchData("/orders.json").then(data => Orders=data)
+   
    calculate_revenue()
 }
-loadData()
+const listsnames=["farmerlist","purchaseslist","inventory","Categories","Orders","PackInventory"]
+function isdataloaded(list){
+    for (const data of list){
+        let datakey=localStorage.getItem(data)
+        if (datakey===null){
+            return false
+        }
+    }
+    return true;
+}
+
+async function dataloadtest(){
+    if(!isdataloaded(listsnames)){
+        console.log("new")
+         await loadData()
+        saveToLocalstorage()
+    }else{
+        loadFromLocalStorage()
+    }
+}
+dataloadtest()
+
 
 let TotalBlueBerries=0;
-let TotalExpenses=0
+let TotalExpenses=calculateexpenses("AllTime");
 let TotalRevenue=0;
-function calculate_revenue(){
-    TotalExpenses=calculateexpenses("AllTime");
+
+
+
+
+async function calculate_revenue(){
+    Orders= await fetchData("/orders.json")
     TotalRevenue=0;
-console.log(Orders)
-Orders.forEach(order=>TotalRevenue+=order.TotalPrice)
-console.log(TotalRevenue)
+    Orders.forEach(order=>TotalRevenue+=order.TotalPrice)
 
 }
+calculate_revenue();
 
 // Creates a notification
 function createToast(message){
@@ -59,10 +101,7 @@ function createToast(message){
     }, 3000);
 }
 
-async function saveData(filePath, data) {
-    console.log(`Saving to ${filePath}:` );
-    JSON.stringify(data, null, 2)
-}
+
 
 
 function updateContent(html) {
@@ -71,9 +110,7 @@ function updateContent(html) {
 }
 
 function testspecialcharss(str) {
-    // Define the pattern to search for special characters
     const specialChars = /[^a-zA-Z" "]/;
-    // Test the string against the pattern
     return specialChars.test(str);
 }
 function testID(id){
@@ -85,7 +122,6 @@ function testID(id){
 
 function loadFarmers() {
     
-    console.log("inload"+farmerslist)
     const html = `
         <div class="card">
             <h2>Farmers</h2>
@@ -94,11 +130,13 @@ function loadFarmers() {
         <span> Name:${farmer.name} </span>
         <span> Contact:${farmer.contact} </span> 
         <span> Location:${farmer.location} </span>
+        <span> Number of purchases:${farmer.Purchases.length} </span>
             <button class="Edit-btn" data-id="${farmer.id}"> Edit</button>
-            <button  class="Delete-btn" data-id="${farmer.id}"> Delete</button></div></li>`)}
+            <button  class="Delete-btn" data-id="${farmer.id}"> Delete</button></div></li>`).join("")}
             </ul>
             <button onclick="addFarmer()">Add Farmer</button>
             <button onclick="searchPage()">Search Farmer</button>
+            <button onclick="exportFarmers()">Export Farmers</button>
         </div>
     `;
     
@@ -106,6 +144,23 @@ function loadFarmers() {
     updateContent(html);
     addFarmerListeners()
 
+}
+
+function exportFarmers() {
+    if (farmerslist.length === 0) {
+        createToast("No Farmers to export")
+        return;
+    }
+    const csvContent = "data:text/csv;charset=utf-8,"
+        + "Farmer ID,Name,Contact,Location,Purchases\n"
+        + farmerslist.map(farmer => `${farmer.id},${farmer.name},${farmer.contact},${farmer.location},${farmer.Purchases}`).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "farmers_data.csv");
+    document.body.appendChild(link);
+    link.click();
 }
 function searchPage(){
     const html = `
@@ -131,7 +186,7 @@ function searchfarmer(){
                 <span> Contact:${farmer.contact} </span> 
                 <span> Location:${farmer.location} </span>
                     <button class="Edit-btn" data-id="${farmer.id}"> Edit</button>
-                    <button  class="Delete-btn" data-id="${farmer.id}"> Delete</button></div></li>`)}
+                    <button  class="Delete-btn" data-id="${farmer.id}"> Delete</button></div></li>`).join("")}
                     </ul>
                     
                 </div>`
@@ -148,12 +203,14 @@ function searchfarmer(){
 function addFarmer() {
     const html = `
         <div class="card">
+        <div class ="add-edit-box">
             <h2>Add Farmer</h2>
             <input type="number" id="farmerID" placeholder="Farmer ID">
             <input type="text" id="farmerName" placeholder="Farmer Name">
             <input type="text" id="farmerContact" placeholder="Farmer Contact">
             <input type="text" id="farmerLocation" placeholder="Farmer Location">
             <button onclick="saveFarmer()">Save Farmer</button>
+            </div>
         </div>
     `;
     updateContent(html);
@@ -178,16 +235,13 @@ function saveFarmer() {
     };
     
     farmerslist.push({ id: newid, name, contact, location,Purchases:[] });
-     console.log(farmerslist)
      createToast("farmer added")
+     updateStorage()
     loadFarmers();
 }
 function deletefarmer(event){
     const farmerid = parseInt(event.target.getAttribute("data-id"))
-    console.log("1")
-    console.log(farmerid)
     farmerslist=farmerslist.filter(farmer=>farmer.id!==farmerid)
-    console.log(farmerslist)
     loadFarmers();
 }
 function ConfirmEdit(farmer) {
@@ -207,23 +261,20 @@ function ConfirmEdit(farmer) {
         createToast("This ID Already used")
         return;
     };
-    console.log(name)
     farmer.id=newid;
     farmer.name=name;
-    console.log(farmer.name)
     farmer.contact=contact;
     farmer.location=location;
     
-     console.log(farmerslist)
-    
+    updateStorage()
     loadFarmers();
 }
 function editfarmer(event){
     const fid = parseInt(event.target.getAttribute("data-id"))
     const Farmer=farmerslist.find(farmer=>fid===farmer.id)
-    console.log(Farmer)
-    const html =`<div id="editfarmer-box">
-    <input type="number" id="farmerID" placeholder="Farmer ID">
+    const html =`<div class ="add-edit-box">
+    <h2>Edit Farmer Info</h2>
+    <input type="number" id="farmerID" placeholder="Farmer Id">
     <input type="text" id="farmerName" placeholder="Farmer Name">
     <input type="text" id="farmerContact" placeholder="Farmer Contact">
     <input type="text" id="farmerLocation" placeholder="Farmer Location">
@@ -241,11 +292,9 @@ function editfarmer(event){
 }
 function addFarmerListeners(){
     document.querySelectorAll(".Delete-btn").forEach(button => {
-        console.log("added")
         button.addEventListener("click" , deletefarmer)
     })
     document.querySelectorAll(".Edit-btn").forEach(button => {
-        console.log("added")
         button.addEventListener("click" , editfarmer)
     })
 }
@@ -256,17 +305,18 @@ function addFarmerListeners(){
     
     const date = new Date();
 const dateString = date.toISOString();
-console.log(date)
     TotalExpenses=calculateexpenses("AllTime")
     const html = `
         <div class="card">
             <h2>Purchases</h2>
             <span>Sorting Options</span>
             <button onclick="sortPurchases('latest')"> Latest First</button>
-            <button onclick="sortPurchases('earliest')"> Earliest First</button>
-            <button onclick="sortbyname()">Farmer name</button>
+            <button onclick="sortPurchases('earliest')"> Oldest First</button>
             <button onclick="sortbyquantity('Desc')">Quantity (High-Low)</button>
             <button onclick="sortbyquantity('Asc')">Quantity (Low-High)</button>
+            <button onclick="sortbyname()">Farmer name</button>
+            <button onclick="sortbytimebox()">Time Period</button>
+            <button onclick="purchaseExpenses()">Expenses</button>
             <div id="PSecond-part">
             <ul>
                 ${purchaseslist.map(purchase =>{let farmer=farmerslist.find(f=>f.id===purchase.farmerId) 
@@ -278,35 +328,97 @@ console.log(date)
         <span> Quantity:${purchase.quantity} Kg </span>
         <span> pricePerKg:${purchase.pricePerKg} $/kg </span>
         <span> totalCost:${purchase.totalCost} $</span>
-            `})}
+            `}).join("")}
             </ul>
             <button onclick="addPurchase()">Add Purchase</button>
-            
-            </div>
-            <div id="PThird-part">
             <h3>Total Expenses</h3>
             <span> :${TotalExpenses} $</span>
             </div>
+            
         </div>
     `;
-    console.log(purchaseslist)
-    console.log("hi")
     updateContent(html);
-    console.log("hi")
     
+}
+function purchaseExpenses(){
+    const seconbox=document.getElementById("PSecond-part")
+    seconbox.innerHTML=`<select>
+                <option value="day">Day</option>
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+                </select>
+                <button onclick="purchaseExpensescalculate()"> Show</button>`
+}
+function purchaseExpensescalculate(){
+    const time=document.querySelector("select").value
+    const todayDate=new Date()
+    let filteredlist=[]
+    if(time==="day"){
+         filteredlist=purchaseslist.filter(purchase=>{(todayDate-new Date(purchase.date))/(1000*60*60*24) <=1})
+    }else if (time==="week"){
+        
+         filteredlist=purchaseslist.filter(purchase=>(todayDate-new Date(purchase.date))/(1000*60*60*24) <=7)
+    }else if(time==="month"){
+       
+        filteredlist=purchaseslist.filter(purchase=>todayDate.getFullYear()===new Date(purchase.date).getFullYear() && todayDate.getMonth()===new Date(purchase.date).getMonth())
+            
+
+    }
+    let timeExpenses=0
+    filteredlist.forEach(purchase=>timeExpenses+=purchase.totalCost)
+    const seconbox=document.getElementById("PSecond-part")
+    seconbox.innerHTML=`<h2>Total Expenses For Last ${time}</h2>
+    <span>${timeExpenses}$</span>`
+
+
+}
+
+function sortbytimebox(){
+    
+    const listingDiv=document.getElementById("PSecond-part")
+    listingDiv.innerHTML=`<input type="date" id="startDate" placeholder="Start Date"></input>
+    <input type="date" id="endDate" placeholder="End Date"></input>
+    <button onclick="sortbytime()">sort</button>`
+}
+function sortbytime(){
+    const listingDiv=document.getElementById("PSecond-part")
+    const startDate=new Date(document.getElementById("startDate").value)
+    const endDate=new Date(document.getElementById("endDate").value)
+    
+    if(startDate>endDate||!startDate||!endDate){
+        createToast("unacceptable Time Period")
+        return
+    }
+    const filteredList=purchaseslist.filter(purchase=>startDate<=new Date(purchase.date)&& new Date(purchase.date)<=endDate)
+    
+    let timeperiodExpenses=0
+    filteredList.forEach(purchase=>timeperiodExpenses+=purchase.totalCost)
+    listingDiv.innerHTML = `<ul>
+        ${filteredList.map(purchase =>{let farmer=farmerslist.find(f=>f.id===purchase.farmerId)
+            return `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
+<span> Farmer ID:${purchase.farmerId} </span>
+<span> Farmer Name:${farmer.name} </span>
+<span> Date:${formatDate(purchase.date)} </span> 
+<span> Quantity:${purchase.quantity} Kg </span>
+<span> pricePerKg:${purchase.pricePerKg} $/kg </span>
+<span> totalCost:${purchase.totalCost} $</span>
+
+    `}).join("")}
+    <h3>Time Period Expenses</h3>
+            <span> :${timeperiodExpenses} $</span>
+    </ul>
+`; 
+
 }
 function sortPurchases(order){
     const sortedlist=purchaseslist;
     const listingDiv=document.getElementById("PSecond-part")
-    console.log("hi")
     listingDiv.innerHTML = ``;
     if( order==="latest"){
-        console.log(order)
-        sortedlist.sort((a,b)=>new Date(a.date)-new Date(b.date))
+        sortedlist.sort((a,b)=>new Date(b.date)-new Date(a.date))
 
     }else {
-        console.log(order)
-        sortedlist.sort((a,b)=>new Date(b.date)-new Date(a.date))
+        sortedlist.sort((a,b)=>new Date(a.date)-new Date(b.date))
     }
     listingDiv.innerHTML = `
             <ul>
@@ -319,7 +431,7 @@ function sortPurchases(order){
         <span> Quantity:${purchase.quantity} Kg </span>
         <span> pricePerKg:${purchase.pricePerKg} $/kg </span>
         <span> totalCost:${purchase.totalCost} $</span>
-            `})}
+            `}).join("")}
             </ul>
             
     `;
@@ -341,7 +453,6 @@ function sortbyfarmer(){
     let resultpurchases=[]
     for(j in simillernames){
         for( i in purchaseslist){
-            console.log(i)
             if (farmerslist[j].id===purchaseslist[i].farmerId){
                 resultpurchases.push(purchaseslist[i])
             }
@@ -358,7 +469,7 @@ function sortbyfarmer(){
 <span> Quantity:${purchase.quantity} Kg </span>
 <span> pricePerKg:${purchase.pricePerKg} $/kg </span>
 <span> totalCost:${purchase.totalCost} $</span>
-    `})}
+    `}).join("")}
     </ul>
     
 `;  
@@ -369,10 +480,8 @@ function sortbyquantity(order){
     listingDiv.innerHTML = ``;
     
     if(order==="Desc"){
-        console.log(order)
         sortedlist.sort((a,b)=>b.quantity-a.quantity)
     }else{
-        console.log(order)
         sortedlist.sort((a,b)=>a.quantity-b.quantity)
     }
     listingDiv.innerHTML = `
@@ -385,7 +494,7 @@ function sortbyquantity(order){
         <span> Quantity:${purchase.quantity} Kg </span>
         <span> pricePerKg:${purchase.pricePerKg} $/kg </span>
         <span> totalCost:${purchase.totalCost} $</span>
-            `})}
+            `}).join("")}
             </ul>
             
     `;
@@ -394,10 +503,17 @@ function sortbyquantity(order){
 function addPurchase() {
     const html = `
         <div class="card">
+        <div class ="add-edit-box"
             <h2>Add Purchase</h2>
-            <input type="number" id="purchaseFarmerID" placeholder="Farmer ID">
+            
+            <select id="purchaseFarmerID">
+                <option value="">SelectFarmer</option>
+                ${farmerslist.map(farmer=>`<option value="${farmer.id}">${farmer.name}</option>`).join("")}
+                
+                </select>
+            
 
-            <select>
+            <select id="categoryselect">
                 <option value="Frozen">Frozen</option>
                 <option value="Organic">Organic</option>
                 <option value="Fresh">Fresh</option>
@@ -407,6 +523,7 @@ function addPurchase() {
             <input type="number" id="purchasePricePerKg" placeholder="Price per kg">
             
             <button onclick="savePurchase()">Save</button>
+            </box>
         </div>
     `;
     updateContent(html);
@@ -424,29 +541,36 @@ function formatDate(date){
 }
 
 function savePurchase() {
-    const farmerId = parseInt(document.getElementById("purchaseFarmerID").value);
-    const category = document.querySelector("select").value;
-    const quantity = parseInt(document.getElementById("purchaseQuantity").value);
-    const pricePerKg = parseFloat(document.getElementById("purchasePricePerKg").value);
+    let farmerId = document.getElementById("purchaseFarmerID").value;
+    const category = document.getElementById("categoryselect").value;
+    let quantity = document.getElementById("purchaseQuantity").value;
+    let pricePerKg = document.getElementById("purchasePricePerKg").value;
+    console.log(farmerId)
     const date=new Date()
-    console.log(date)
+    
     const totalCost = quantity * pricePerKg;
     if(farmerId===""|| quantity ==="" || pricePerKg===""||date==""){
         createToast("Please fill all the boxes")
         return
-    }else if(testID(farmerId)|| testID(quantity)||testID(pricePerKg)){
+    }else if ( testID(quantity)||testID(pricePerKg)){
         createToast("only number accepted");
         return;
-    }else if (farmerslist.findIndex(farmersearch=>farmersearch.id===farmerId)===-1){
-        createToast("This Farmer Does not Exist")
-        return
+
+    }else if(quantity <=0||pricePerKg<=0){
+        createToast("The quantity and the price must be greater than 0");
+        return;
     }
+    farmerId=parseInt(farmerId)
+    quantity = parseInt(quantity)
+    pricePerKg = parseFloat(pricePerKg)  
     const purchaseId= purchaseslist.length +1001
     const farmer=farmerslist.find(farmer=>farmer.id===farmerId);
     inventory.find(item=>item.category===category).stock +=quantity
     purchaseslist.push({purchaseId , farmerId,date,category,quantity,pricePerKg,totalCost})
     farmer.Purchases.push(purchaseId)
     loadPurchases(purchaseslist);
+    updateStorage()
+    
 }
 function calculateexpenses(timeperiod){
     const enddate=new Date();
@@ -455,8 +579,6 @@ function calculateexpenses(timeperiod){
         purchaseslist.forEach(p=>totalExpenses=totalExpenses+p.totalCost)
         return totalExpenses
     }
-    console.log(totalExpenses)
-    
 }
 
 // ------------------- Product Categorization -------------------
@@ -471,9 +593,10 @@ function loadPacking() {
             <span> Name:${category.name} </span>
             <span> Weight:${category.weight} </span> 
             <span> PricePerUnit:${category.pricePerUnit} </span>
-            <span> Stock:${category.stock} </span>
+            
             <button class="Edit-btn-category" data-id="${category.id}"> Edit</button>
-            <button class="add-btn-category" data-id="${category.id}"> Add Packs</button>`).join(" ")}
+            <button class="More-btn-category" data-id="${category.id}"> More.</button>
+            `).join("")}
 
             </ul>
             <button onclick="createCategory()">Create Category</button>
@@ -482,22 +605,72 @@ function loadPacking() {
     
     
     updateContent(html);
-    console.log(document.querySelectorAll("Edit-btn-category"))
     document.querySelectorAll(".Edit-btn-category").forEach(btn=>btn.addEventListener("click",editCategory))
-    document.querySelectorAll(".add-btn-category").forEach(btn=>btn.addEventListener("click",addPack))
+    document.querySelectorAll(".More-btn-category").forEach(btn=>btn.addEventListener("click",moreCategory))
+    
 
 }
-function editCategory(){
+function moreCategory(event){
+    const id =parseInt(event.target.getAttribute("data-id"))
+    const cateBox=document.querySelector(`.category-box[data-id="${id}"]`)
+    if(document.querySelector(`.category-box[data-id="${id}"] .more`)){
+        return
+    }
+    const moreBox=document.createElement("div");
+    moreBox.classList.add("more")
+    moreBox.innerHTML=`
+    ${PackInventory.filter(inv=>inv.packId===id).map(pack=>`<div>Category: ${inventory.find(inv=>inv.itemId===pack.itemId).category} Stock : ${pack.stock}<button class="add-btn-category" data-id="${pack.IPID}"> Add Packs</button></div>`).join("")}`
+    cateBox.appendChild(moreBox)
+    document.querySelectorAll(".add-btn-category").forEach(btn=>btn.addEventListener("click",addPack))
+}
+function editCategory(event){
+    const PackId = parseInt(event.target.getAttribute("data-id"))
+    const Pack=Categories.find(pack=>PackId===pack.id)
+    const html =`<div id="editPack-box" class ="add-edit-box">
+    <input type="number" id="price" placeholder="New Price">
+    <button  id="confirm-Edit">Save Changes </button>
+    </div>
+    `;
+    updateContent(html);
 
+    document.getElementById("confirm-Edit").addEventListener("click",function(){ConfirmEditPack(Pack)})
+}
+function ConfirmEditPack(Pack){
+    const newPrice =parseFloat(document.getElementById("price").value.trim());
+    if (newPrice==="") {
+        createToast("Not acceptable values")
+        return;
+    }else if (testprice(newPrice)){
+        createToast("The Price Shouldn't contain any Special Chars")
+        return;
+    }else if (newPrice<=0){
+        createToast("The Price Should Be greater than 0")
+        return;
+    }
+    Pack.pricePerUnit=newPrice;
+    
+    updateStorage()
+    
+    loadPacking();
+}
+function testprice(price){
+    specialChars = /[^0-9." "]/;
+    return specialChars.test(price);
 }
 function addPack(event){
-    console.log("hi")
-    const id =event.target.getAttribute("data-id")
+    const ipid =parseInt(event.target.getAttribute("data-id"))
+    const id= PackInventory.find(pack=>pack.IPID===ipid).packId
     const cateBox=document.querySelector(`.category-box[data-id="${id}"]`)
+    if(document.querySelector(`.addition-box[data-id="${ipid}"]`)){
+        return
+    }
     const input=document.createElement("div");
-input.innerHTML=`<input type="number" id="addingAmount" placeholder="Amount of Units"> 
-<button id="confirm-addition-category" data-id="${id}"> Confirm</button>`
-cateBox.appendChild(input)
+    
+
+    input.innerHTML=`<input type="number" id="addingAmount" class="addition-box" data-id=${ipid} placeholder="Amount of Units"> 
+    <button class="confirm-addition-category" data-id="${ipid}"> Confirm</button>`
+    cateBox.appendChild(input)
+    document.querySelectorAll(".confirm-addition-category").forEach(btn=>btn.addEventListener("click",confirmAddition))
 }
 
 
@@ -505,12 +678,14 @@ cateBox.appendChild(input)
 function createCategory(){
     const html = `
         <div class="card">
+            <div class ="add-edit-box">
             <h2>Create Category</h2>
             <input type="text" id="categoryName" placeholder="Category Name">
             <input type="number" id="weightCategory" placeholder="Weight ( in kg)" min="0">
             <input type="number" id="categoryPricePerUnit" placeholder="Price Per Unit">
             
             <button onclick="saveCategory()">Create</button>
+            </div>
         </div>
     `;
     updateContent(html);
@@ -523,7 +698,7 @@ function saveCategory(){
     if(name===""|| weight ==="" || pricePerUnit===""){
         createToast("Please fill all the boxes")
         return
-    }else if(testID(weight)||testID(pricePerUnit)){
+    }else if(testID(weight)||testprice(pricePerUnit)){
         createToast("only Positive numbers accepted");
         return;
     }else if (testspecialcharss(name)){
@@ -539,8 +714,45 @@ function saveCategory(){
     const id= Categories.length +1
     
     
-    Categories.push({id , name,weight,pricePerUnit,"stock":0})
+    Categories.push({id, name,weight,pricePerUnit,"stock":0})
+    for (category of inventory){
+        const IPID=PackInventory.length+1
+        PackInventory.push({IPID,itemId:category.itemId,packId:id,stock:0})
+    }
+    updateStorage()
     loadPacking()
+}
+function confirmAddition(event){
+    const id =parseInt(event.target.getAttribute("data-id"))
+    const packInv=PackInventory.find(inv=> inv.IPID===id)
+
+    const amount = parseInt(document.getElementById("addingAmount").value);
+    if(amount==""){
+        createToast("Please Fill All the Boxes")
+        return
+    }else if (testID(amount)){
+        createToast("Only Positive number accepted")
+        return
+    }else if(amount<=0){
+        createToast("The Amount must be greater than 0")
+        return
+
+    }
+    const pack=Categories.find(pack=>pack.id===packInv.packId)
+    const weight=amount*pack.weight
+    const category =inventory.find(cate=>cate.itemId===packInv.itemId)
+    if(weight>category.stock){
+        createToast(`not Avaliable Amount (The avalible amount is ${category.stock} Kg`)
+        return
+    }
+    category.stock-=weight
+    packInv.stock+=amount
+    pack.stock+=amount
+    createToast("Pack created Successfully")
+    updateStorage()
+    loadPacking()
+
+
 }
 // ------------------- Utility Functions -------------------
 
@@ -548,10 +760,7 @@ function saveCategory(){
 
 
 
-function updateContent(html) {
-    const content = document.getElementById("content");
-    content.innerHTML = html;
-}
+
 
 
 
@@ -560,7 +769,7 @@ function formatCurrency(number) {
     return `$${number.toFixed(2)}`;
 }
 
-loadFarmers();
+
 
 
 
@@ -574,21 +783,21 @@ loadFarmers();
 function loadInventory() {
     const content = document.getElementById("content");
     const lowStockItems = inventory.filter(item => item.stock < item.ReorderLevel);
-    console.log(inventory)
-    console.log(lowStockItems)
     const html = `
         <div class="card">
             <h2>Inventory Management</h2>
             <button id ="DemandForecast" >Demand forecast (Week)</button>
-            <button onclick="generateReport()">Generate Report</button>
+            <button id="inventorySummaries">Generate Report</button>
             <div id="ISecond-part">
             <ul>
                 ${inventory.map(item => `
-                    <li>
+                    <li class= "Inventory-box">
                         <span>${item.itemId}</span>
-                        <span>${item.category} - ${item.stock}kg </span>
+                        <span>${item.category} : ${item.stock}kg </span>
                         <span>Reorder Level: ${item.ReorderLevel}kg</span>
-                        <button onclick="updateStock(${item.itemId})">Update Stock</button>
+                        <span>Restock Date: ${formatDate(new Date(item.RestockDate))}</span>
+
+                        <button onclick="addPurchase()">Update Stock</button>
                     </li>`).join('')}
             </ul>
             </div>
@@ -601,21 +810,108 @@ function loadInventory() {
         </div>
     `;
     updateContent(html)
+    document.getElementById("inventorySummaries").addEventListener("click",inventorySummaries)
     document.getElementById("DemandForecast").addEventListener("click",()=>{
         const weeklist=inventoryTime("week")
         demandForecast(weeklist)
     })
 }
+function generateReport(){
+    let TotalFresh=0;
+    purchaseslist.filter(purchase=>purchase.category==="Fresh").forEach(purchase=>TotalFresh+=purchase.totalCost)
+    let TotalOrganic=0
+    purchaseslist.filter(purchase=>purchase.category==="Organic").forEach(purchase=>TotalOrganic+=purchase.totalCost)
+    let TotalFrozen=0
+    purchaseslist.filter(purchase=>purchase.category==="Frozen").forEach(purchase=>TotalFrozen+=purchase.totalCost)
+    const html=`
+    <div class="card">
+    <h2>Raw Materials Report</h2>
+        <span> Fresh Blueberries: ${TotalFresh} $</span>
+        <div><span> Organic Blueberries: ${TotalOrganic} $</span></div>
+        <div><span> Frozen Blueberries: ${TotalFrozen} $</span></div>
+
+
+    </div>
+    `
+    updateContent(html)
+}
+
+
+
+
+
+
+
+function inventorySummaries(){
+    const seconbox=document.getElementById("ISecond-part")
+    seconbox.innerHTML=`<select>
+                <option value="day">Day</option>
+                <option value="week">Week</option>
+                <option value="month">Month</option>
+                </select>
+                <button onclick="showinventorysummary()"> Show</button>`
+}
+function showinventorysummary(){
+    const time=document.querySelector("select").value
+    const todayDate=new Date()
+    let filteredlist=[]
+    if(time==="day"){
+         filteredlist=purchaseslist.filter(purchase=>(todayDate-new Date(purchase.date))/(1000*60*60*24) <=1)
+    }else if (time==="week"){
+        
+         filteredlist=purchaseslist.filter(purchase=>(todayDate-new Date(purchase.date))/(1000*60*60*24) <=7)
+    }else if(time==="month"){
+       
+        filteredlist=purchaseslist.filter(purchase=>todayDate.getFullYear()===new Date(purchase.date).getFullYear() && todayDate.getMonth()===new Date(purchase.date).getMonth())
+            
+
+    }
+    let timeExpenses=0
+    let TotalFrozen=0
+    let totalFresh=0
+    let TotalOrganic=0
+    const FrozenPurchses=filteredlist.filter(purchase=>purchase.category==="Frozen")
+    const OrganicPurchses=filteredlist.filter(purchase=>purchase.category==="Organic")
+    const FreshPurchses=filteredlist.filter(purchase=>purchase.category==="Fresh")
+    if(FrozenPurchses){
+        FrozenPurchses.forEach(frozen=>TotalFrozen+=frozen.quantity)
+    }
+    if(OrganicPurchses){
+        OrganicPurchses.forEach(organic=>TotalOrganic+=organic.quantity)
+    }
+    if(FreshPurchses){
+        FreshPurchses.forEach(fresh=>totalFresh+=fresh.quantity)
+    }
+
+    const seconbox=document.getElementById("ISecond-part")
+    seconbox.innerHTML=`<h2>Total incomming material For Last ${time}</h2>
+    <div id="invetory-report-box">
+    <span> Frozen :${TotalFrozen}</span>
+    <span> Orgnaic${TotalOrganic}</span>
+    <span>Fresh ${totalFresh}</span>
+    </div>`
+
+
+}
+
+
+
+
+
+
+
 
 
 function addInventory() {
     const html = `
         <div class="card">
+        <div class ="add-edit-box">
             <h2>Add Inventory</h2>
             <input type="text" id="inventoryCategory" placeholder="Category">
             <input type="number" id="inventoryStock" placeholder="Stock">
             <input type="number" id="inventoryPrice" placeholder="Price per unit">
             <button onclick="saveInventory()">Save Inventory</button>
+            </div>
         </div>
     `;
     updateContent(html);
@@ -624,7 +920,6 @@ function addInventory() {
 
 async function saveInventory() {
     if (!validateFields({ inventoryCategory: "text", inventoryStock: "number", inventoryPrice: "number" })) return;
-    console.log("valid")
     const category = document.getElementById("inventoryCategory").value;
     const stock = parseInt(document.getElementById("inventoryStock").value);
     const pricePerUnit = parseFloat(document.getElementById("inventoryPrice").value);
@@ -632,40 +927,35 @@ async function saveInventory() {
     const inventory = await fetchData("./data/inventory.json");
     inventory.push({ category, stock, pricePerUnit });
     await saveData("./data/inventory.json", inventory);
+    updateStorage()
     loadInventory();
 }
 function inventoryTime(timeperiod){//this generates a list of the purchases for time  certain period
     const todayDate =new Date();
-    console.log(timeperiod)
     let filteredlist=[]
     if(timeperiod==="day"){
          filteredlist=Orders.filter(order=>{(todayDate-new Date(order.Date))/(1000*60*60*24) <=1})
     }else if (timeperiod==="week"){
         
          filteredlist=Orders.filter(order=>(todayDate-new Date(order.Date))/(1000*60*60*24) <=7)
-         console.log(filteredlist)
     }else if(timeperiod==="month"){
          filteredlist=Orders.filter(order=>{todayDate.getFullYear()===new Date(order.Date).getFullYear() && todayDate.getMonth()===new Date(order.Date).getMonth()})
     }else 
      filteredlist=Orders
 
-    console.log(filteredlist)
     return filteredlist
 }
 function demandForecast(list){
-    console.log(list)
     let demandlist={};
-    console.log(list.Products)
+    console.log(Categories)
     list.forEach(order=>order.Products.forEach(product=>{
         if(!demandlist[product.Category]){
             demandlist[product.Category]={total:0,count:0}
         }
-        console.log(product.Category)
-        console.log(Categories)
-        console.log(Categories.find(cate=>cate.name===product.Pack))
-        demandlist[product.Category].total+=Categories.find(cate=>cate.name===product.Pack).weight
+        demandlist[product.Category].total+=product.Quantity*Categories.find(cate=>cate.name===product.Pack).weight
         demandlist[product.Category].count+=1;
     }))
+    console.log(demandlist)
     let forecasted=[]
     Object.keys(demandlist).forEach(category=>{
         const average=demandlist[category].total/demandlist[category].count
@@ -675,14 +965,14 @@ function demandForecast(list){
             ,prediction:prediction
         })
     })
-    console.log(demandlist)
+    console.log(forecasted)
     let listingDiv=document.getElementById("ISecond-part")
     listingDiv.innerHTML=`<ul>
                 ${forecasted.map(item => `
-                    <li>
+                    <li class="demandforecast-box">
                         <span> Category: ${item.category}</span>
-                        <span> Total Sales ${item.totalSales}</span>
-                        <span>Prediction For the next Week: ${item.prediction}</span>
+                        <span> Total Sales ${item.totalSales} Kg</span>
+                        <span>Prediction For the next Week: ${item.prediction} Kg</span>
                     
                     </li>`).join('')}
             </ul>`
@@ -692,7 +982,6 @@ function demandForecast(list){
 
 
 function loadOrders() {
-    console.log(Orders)
     TotalRevenue=0
     Orders.forEach(order=>TotalRevenue+=order.TotalPrice)
     const html = `
@@ -702,10 +991,15 @@ function loadOrders() {
             <button onclick="sortOrder('Status')"> Status</button>
             <button onclick="sortOrder('Customer')"> Customer</button>
             <button onclick="sortOrder('Category')">Category</button>
+            <button onclick="sortbytimeboxSales()">Time Period</button>
+            <button onclick="generateReportSales()">Generate Report</button>
+            <button onclick="calculateSelectedOrders()">Calculate Selected</button>
+            <button onclick="visualReports()">Visual Reports</button>
+
             
             <div id="OSecond-part">
             <ul>
-                ${Orders.map(order => `<li class="order-box"><span>Customer Name: ${order.CusName}</span> ${order.Products.map(product=>`<span>${product.Pack} (${product.Category}) : ${product.Quantity} units</span>`)}<span>Total Price: ${order.TotalPrice} $</span>
+                ${Orders.map(order => `<li class="order-box"><input type="checkbox" class="order-checkbox" data-orderid="${order.orderId}"><span>Customer Name: ${order.CusName}</span> ${order.Products.map(product=>`<span>${product.Pack} (${product.Category}) : ${product.Quantity} units</span>`).join("")}<span>Total Price: ${order.TotalPrice} $</span><span> Date : ${ formatDate(new Date(order.Date))} </span>
                     <select class="StatusSelect" data-id=${order.orderId} >
                 <option value="${order.Status}">${order.Status}</option>
                 <option value="Pending">Pending</option>
@@ -714,7 +1008,7 @@ function loadOrders() {
                 <option value="Delivered">Delivered</option>
                 </select>
                 <button class="update-status" data-id="${order.orderId}">Update</button>
-                </li>`).join(" ")}
+                </li>`).join("")}
             </ul>
             <div>Total Revenue : ${TotalRevenue}</div>
             <button onclick="addSale()">Add Sale</button>
@@ -727,6 +1021,52 @@ function loadOrders() {
     updateContent(html);
     document.querySelectorAll(".update-status").forEach(btn=>btn.addEventListener("click",Updatestatus))
 }
+function visualReports(){
+    let listingDiv=document.getElementById("OSecond-part")
+    listingDiv.innerHTML=`<div id="ChartBox">
+                <h2>Sales Trends</h2>
+                <canvas id="salesBarChart"></canvas>
+            </div>`
+
+        renderCharts();
+}
+function sortbytimeboxSales(){
+    
+    const listingDiv=document.getElementById("OSecond-part")
+    listingDiv.innerHTML=`<input type="date" id="startDate" placeholder="Start Date"></input>
+    <input type="date" id="endDate" placeholder="End Date"></input>
+    <button onclick="sortbytimeSales()">sort</button>`
+}
+function sortbytimeSales(){
+    const listingDiv=document.getElementById("OSecond-part")
+    const startDate=new Date(document.getElementById("startDate").value)
+    const endDate=new Date(document.getElementById("endDate").value)
+    
+    if(startDate>endDate||!startDate||!endDate){
+        createToast("unacceptable Time Period")
+        return
+    }
+    const filteredList=Orders.filter(order=>startDate<=new Date(order.Date)&& new Date(order.Date)<=endDate)
+    
+    let timeperiodRevenue=0
+    filteredList.forEach(order=>timeperiodRevenue+=order.TotalPrice)
+    listingDiv.innerHTML = `<ul>
+    ${filteredList.map(order => `<li class="order-box"><input type="checkbox" class="order-checkbox" data-orderid="${order.orderId}"><span>Customer Name: ${order.CusName}</span> ${order.Products.map(product=>`<span>${product.Pack} (${product.Category}) : ${product.Quantity} units</span>`).join("")}<span>Total Price: ${order.TotalPrice} $</span><span> Date : ${ formatDate(new Date(order.Date))} </span>
+        <select class="StatusSelect" data-id=${order.orderId} >
+    <option value="${order.Status}">${order.Status}</option>
+    <option value="Pending">Pending</option>
+    <option value="Processed">Processed</option>
+    <option value="Shipped">Shipped</option>
+    <option value="Delivered">Delivered</option>
+    </select>
+    <button class="update-status" data-id="${order.orderId}">Update</button>
+    </li>`).join("")}
+    <h3>Time Period Revenue</h3>
+            <span> :${timeperiodRevenue} $</span>
+    </ul>
+`; 
+
+}
 function sortOrder(sortingCondition){
         let listingDiv=document.getElementById("OSecond-part")
         if(sortingCondition==="Status"){
@@ -736,16 +1076,16 @@ function sortOrder(sortingCondition){
                 <option value="Shipped">Shipped</option>
                 <option value="Delivered">Delivered</option>
                 </select>
-                <button onclick="sortStatus()"></button>`;
+                <button onclick="sortStatus()"> Show</button>`;
         }else if (sortingCondition==="Customer"){
             
         listingDiv.innerHTML=`<input type="text" id="CustomerName" placeholder="Cutomer Name">
-        <button onclick="sortOrderByName()">sort</button>`
+        <button onclick="sortOrderByName()">Show</button>`
         }else{
             listingDiv.innerHTML=`<select>
-            ${Categories.map(category=>`<option value="${category.name}"> ${category.name}</option>`)}
+            ${Categories.map(category=>`<option value="${category.name}"> ${category.name}</option>`).join("")}
                 </select>
-                <button onclick="sortCategory()"></button>`;
+                <button onclick="sortCategory()">Show</button>`;
         }
 }
 function sortOrderByName(){
@@ -761,13 +1101,10 @@ function sortStatus(){
 }
 function sortCategory(){
     const category=document.querySelector("select").value
-    console.log(category)
     const filteredList=[]
     for(o in Orders){
-        console.log(o)
         for( p in Orders[o].Products){
-            console.log(Orders[o].Products[p].category===category)
-            if (Orders[o].Products[p].category===category){
+            if (Orders[o].Products[p].Pack===category){
                 filteredList.push(Orders[o])
                 break;
             }
@@ -776,11 +1113,11 @@ function sortCategory(){
     list_sorted(filteredList)
 }
 function list_sorted(list){
-    console.log(list)
     const listingDiv=document.getElementById("OSecond-part")    
     listingDiv.innerHTML = `
     <ul>
-                ${list.map(order => `<li class="order-box"><span>Customer Name: ${order.CusName}</span> ${order.Products.map(product=>`<span>${product.category} : ${product.Quantity} units</span>`)}<span>Total Price: ${order.TotalPrice} $</span>
+
+                ${list.map(order => `<li class="order-box"><span>Customer Name: ${order.CusName}</span> ${order.Products.map(product=>`<span>${product.Pack} (${product.Category}) : ${product.Quantity} units</span>`).join("")}<span>Total Price: ${order.TotalPrice} $</span>
                     <select class="StatusSelect" data-id=${order.orderId} >
                 <option value="${order.Status}">${order.Status}</option>
                 <option value="Pending">Pending</option>
@@ -789,22 +1126,31 @@ function list_sorted(list){
                 <option value="Delivered">Delivered</option>
                 </select>
                 <button class="update-status" data-id="${order.orderId}">Update</button>
-                </li>`)}
+                </li>`).join("")}
             </ul>
     
 `; 
 }
+function calculateSelectedOrders() {
+    const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+    let totalSelected = 0;
+    checkedBoxes.forEach(box => {
+        const orderId = box.dataset.orderid;
+        const order = Orders.find(o => o.orderId === parseInt(orderId));
+        if (order) {
+            totalSelected += order.TotalPrice;
+        }
+    });
+    createToast(`Total cost for selected orders: $${totalSelected}`);
+}
 function Updatestatus(event){
-    console.log(event.target)
     const id = parseInt(event.target.getAttribute("data-id"))
-    console.log(id)
-    
     const order=Orders.find(order=> order.orderId===id)
-    console.log(order)
-    order.Status=document.querySelector(`.StatusSelect[data-id="${id}"]`).value
-    console.log(Orders)
+   order.Status=document.querySelector(`.StatusSelect[data-id="${id}"]`).value
+   updateStorage()
     loadOrders()
     createToast("Updated Successfully")
+    updateStorage()
     
 }
 
@@ -815,52 +1161,75 @@ function Updatestatus(event){
 function addSale() {
     const html = `
         <div class="card">
-            <h2>Add Sale</h2>
-            <input type="text" id="CusName" placeholder="Customer Name">
-            <input type="text" id="CusContact" placeholder="Contact Info">
-            <input type="text" id="ShippingInfo" placeholder="Shipping Info">
-            <div id="category-selection">
-                <div class="cateBox">
-                <select class="categorySelect" >
-                <option value="">Select a Category</option>
-                ${Categories.map(category=>`<option value="${category.name}"> ${category.name}</option>`)}
-                </select>
-                <input type="number" id="Quantity" placeholder="Quantity" min =1 value=1>
+            <div id="add-sale-box" class ="add-edit-box">
+                <h2>Add Sale</h2>
+                <input type="text" id="CusName" placeholder="Customer Name">
+                <input type="text" id="CusContact" placeholder="Contact Info">
+                <input type="text" id="ShippingInfo" placeholder="Shipping Info">
+                <div id="category-selection">
+                    <div class="cateBox">
+                    <select class="packSelect" >
+                    <option value="">Select a Category</option>
+                    ${Categories.map(category=>`<option value="${category.name}"> ${category.name}</option>`).join("")}
+                    </select>
+                    <select class="categorySelect">
+                    <option value="Frozen">Frozen</option>
+                    <option value="Organic">Organic</option>
+                    <option value="Fresh">Fresh</option>
+                    </select >
+                    <lable for="Quantity"> Quantity</label>
+                    <input type="number" id="Quantity" placeholder="Quantity" min =1 value=1>
+                    </div>
+                    
                 </div>
-                
+                <button onclick="addProduct()">Add Product</button>
+                <input type="date" id="PurchaseDate" placeholder="Purchase Date">
+                <button onclick="saveSale()">Save</button>
             </div>
-            <button onclick="addcategory()">Add Product</button>
-            <input type="date" id="PurchaseDate" placeholder="Purchase Date">
-            <button onclick="saveSale()">Save</button>
         </div>
     `;
     updateContent(html);
 }
-function addcategory(){
-    console.log(Categories)
+function addProduct(){
    
     const category_box=document.getElementById("category-selection")
     let select_box=document.createElement("div")
     select_box.classList.add("cateBox")
-    console.log(Categories)
-    select_box.innerHTML=`<select class="categorySelect" ><option value="">Select a Category</option>
-    ${Categories.map(category=>`<option value="${category.name}" > ${category.name}</option>`)}
+    select_box.innerHTML=`<select class="packSelect" ><option value="">Select a Category</option>
+    ${Categories.map(category=>`<option value="${category.name}" > ${category.name}</option>`).join("")}
     </select>
-    <input type="number" id="Quantity" placeholder="Quantity" min =1 value=1>`
+    <select class="categorySelect">
+                <option value="Frozen">Frozen</option>
+                <option value="Organic">Organic</option>
+                <option value="Fresh">Fresh</option>
+                
+                </select >
+    <input type="number" id="Quantity" placeholder="Quantity" min =1 value=1>
+    <button id="remove-addition-box">Remove</button>`
     category_box.appendChild(select_box)
+    document.getElementById("remove-addition-box").addEventListener("click", (event)=>{
+        document.getElementById("remove-addition-box").parentElement.remove();
+    })
 }
+
 function saveSale() {
     const CusName = document.getElementById("CusName").value.trim();
     const CusContact = document.getElementById("CusContact").value.trim();
     const CusShippingInfo =document.getElementById("ShippingInfo").value.trim();
+    let pack; //pack name
+    let category;
+    let Quantity;
     let Products=[]
+    let packInv;
+    let order={}
     const boxes=document.querySelectorAll(".cateBox")
-    for (const box of boxes){
-        const category =box.querySelector("select").value
-        console.log(category)
-        const Quantity= parseInt( box.querySelector("input").value)
+    for(const box of boxes){
+        pack =box.querySelector(".packSelect").value
+        category=box.querySelector(".categorySelect").value
         
-        if(!category||!Quantity){
+        Quantity= parseInt( box.querySelector("input").value)
+        
+        if(!category||!Quantity||!pack){
             
             createToast("Empty Values")
             return
@@ -873,22 +1242,40 @@ function saveSale() {
             createToast("The Quantity Should be Atlest 1")
             return;
         }
+        
+        const Category=inventory.find(inv=>inv.category===category)
+        
+        const Pack=Categories.find(cate=>cate.name===pack)
+        packInv=PackInventory.find(Pi=>Pack.id===Pi.packId && Category.itemId===Pi.itemId)
+        if(order[packInv.IPID]){
+            createToast("The same product exists more than one time")
+            return
+        }
+        order[packInv.IPID]=true
+        
+        
+        if (packInv.stock<Quantity){
+                createToast(`No enough packs to make the sale (the number of avaliable packs is ${packInv.stock} packs`)
+                return
+        }
         else{
-            console.log(Categories.find(cate=>cate.name===category))
-            const TotalPrice=Categories.find(cate=>cate.name===category)["pricePerUnit"] //The Price Here is The Unit Price , not The Total Price
+            
+            const Price=Categories.find(cate=>cate.name===pack)["pricePerUnit"] //The Price Here is The Unit Price , not The Total Price
             const product = {
-                "category": category,
+                "Pack":pack,
+                "Category": category,
                 "Quantity": Quantity,
-                "TotalPrice": TotalPrice
+                "Price": Price
             };
             Products.push(product)
             
         }
-        
+    
     }
-    console.log(Products)
+
+    
     let TotalPrice=0;
-    Products.forEach(cate=>TotalPrice+=cate.Quantity*cate.TotalPrice)
+    Products.forEach(cate=>TotalPrice+=cate.Quantity*cate.Price)
     if(CusName===""|| CusContact ==="" || CusShippingInfo===""){
         createToast("Please fill all the boxes")
         return
@@ -897,20 +1284,67 @@ function saveSale() {
         return;
     }
     const orderId= Orders.length +1
-    
-
+    packInv.stock-=Quantity;
+    TotalRevenue+=TotalPrice
     Orders.push({orderId ,CusName,CusContact,CusShippingInfo,Products,TotalPrice,"Status":"Pending","Date":new Date})
-    console.log(Orders)
+    
     loadOrders();
+    updateStorage()
 }
+
+
+function generateReportSales(){
+    let demandlist={};
+    Orders.forEach(order=>order.Products.forEach(product=>{
+        if(!demandlist[product.Pack]){
+            demandlist[product.Pack]={total:0,revenue:0}
+        }
+        demandlist[product.Pack].total+= product.Quantity
+        demandlist[product.Pack].revenue+= product.Quantity *product.Price
+        
+    }))
+    const html = `
+        <div class="card">
+        <div id = "Report">
+            ${Object.keys(demandlist).map(pack=>`<p> Pack : ${pack} , Sold: ${demandlist[pack].total} , Revenue : ${demandlist[pack].revenue}`).join("")}
+            </div>
+        </div>
+    `;
+    
+    updateContent(html);
+}
+
 
 
 //========================financialAnalysis====================
 function financialAnalysis(){
-    const html=`<p>Total Income : ${TotalRevenue}</p>
+    const html=`<div class ="add-edit-box">
+    <h2>Enter The Tax Rate</h2>
+    <input type="number" id ="tax" placeholder="Tax rate">
+    <button onclick="calculatefinancialAnalysis()">Calculate</button>
+    </div>
+    `
+    updateContent(html)
+}
+function calculatefinancialAnalysis(){
+    let taxrate =document.getElementById("tax").value;
+    if(taxrate===""){
+        createToast("Fill The Box")
+        return
+    }else if (testprice(taxrate)){
+        createToast("spiecial Chars not accepted")
+        return
+    }else if (taxrate<=0 || taxrate>=100){
+        createToast("The Tax Rate Should be between 0 and 100")
+        return
+    }
+    taxrate=parseFloat(taxrate/100);
+    
+    const html=`<div id = "FinancialAnalysis"><p>Total Income : ${TotalRevenue}</p>
     <p>Total Expenses : ${TotalExpenses}</p>
-    <p>Total Tax : ${TotalRevenue*0.1}</p>
+    <p>Total Tax : ${formatCurrency(TotalRevenue*taxrate)}</p>
     <p>Net Profit : ${TotalRevenue-TotalExpenses-TotalRevenue*0.1}</p>
+    </div>
     `
     updateContent(html)
 }
@@ -919,40 +1353,36 @@ function financialAnalysis(){
 
 async function generateReports() {
     let demandlist={};
-
-    
     Orders.forEach(order=>order.Products.forEach(product=>{
         if(!demandlist[product.Category]){
             demandlist[product.Category]={total:0}
         }
-        console.log(product.Category)
-        console.log(Categories)
-        console.log(Categories.find(cate=>cate.name===product.Pack))
-        demandlist[product.Category].total+=Categories.find(cate=>cate.name===product.Pack).weight
+        demandlist[product.Category].total+= product.Quantity
         
     }))
     
-    Object.keys(demandlist).forEach(category=>{})
-
-    
     
     const Tax=TotalRevenue*0.1
-    const netProfit = TotalRevenue - TotalExpenses-Tax;
+    const netProfit= TotalRevenue-TotalExpenses-Tax
+    console.log(inventory)
     const html = `
         <div class="card">
+            <div id = "Report">
             <h2>End-Period Report</h2>
-            <p>Total Expenses: ${formatCurrency(TotalExpenses)}$</p>
-            <p>Total Revenue: ${formatCurrency(TotalRevenue)}$</p>
-            <p> Total Tax: ${formatCurrency(Tax)}$
-            <p>Net Profit: ${formatCurrency(netProfit)}$</p>
-            ${Object.keys(demandlist).map(category=>`<p> Category: ${category}  Amount: ${demandlist[category].total} Kg`)}
-
+            <p>Total Revenue:${formatCurrency(TotalRevenue)}$</p>
+            <p>Expenses:${formatCurrency(TotalExpenses)}$</p>
+            <p>Total Tax:${formatCurrency(Tax)}$</p>
+            <p>Net Profit :${formatCurrency(netProfit)}$</p>
+            ${Object.keys(demandlist).map(category=> `<p> category: ${category} Aold ${demandlist[category].total} kg`.join(""))}
+            ${inventory.map(item=>`<p> Category: ${item.category}  Remaining Stock: ${item.stock} Kg`).join("")}
+            </div>
         </div>
     `;
+    
     updateContent(html);
 }
 
-// ------------------- Initialization -------------------
+
 
 
 function addNavListeners() {
@@ -961,80 +1391,41 @@ function addNavListeners() {
     document.getElementById("inventoryManagement").addEventListener("click", loadInventory);
     document.getElementById("catogaryPackingManagement").addEventListener("click", loadPacking)
     document.getElementById("salesManagement").addEventListener("click", loadOrders);
-    document.getElementById("generateReports").addEventListener("click", generateReports);
+    document.getElementById("egenerateReports").addEventListener("click", generateReports);
     document.getElementById("financialAnalysis").addEventListener("click", financialAnalysis);
     
-
     
 }
 
-/**
- * Initialize the application.
- */
-document.addEventListener("DOMContentLoaded", () => {
+
+
+document.addEventListener("DOMContentLoaded",()=>{
     addNavListeners();
-});
+})
 
 
 
-// ------------------- Advanced Features -------------------
 
-
-async function search(type, criteria, value) {
-    const data = await fetchData(`./data/${type}.json`);
-    const results = data.filter(item => String(item[criteria]).toLowerCase().includes(value.toLowerCase()));
-
-    if (type === "farmers") {
-        displayFarmers(results);
-    } else if (type === "purchases") {
-        displayPurchases(results);
-    } else if (type === "sales") {
-        displaySales(results);
-    }
-}
-
-
-async function sort(type, criteria, ascending = true) {
-    const data = await fetchData(`./data/${type}.json`);
-    data.sort((a, b) => {
-        if (a[criteria] < b[criteria]) return ascending ? -1 : 1;
-        if (a[criteria] > b[criteria]) return ascending ? 1 : -1;
-        return 0;
+//==============Sales Trend=====================
+function renderCharts() {
+    let slls=[];
+    Orders.forEach(order=>order.Products.forEach(product=>slls.push(product)))
+    const categories = [...new Set(slls.map(sale => sale.Pack))]; 
+    const data = categories.map(category => {
+        return slls.filter(sale => sale.Pack === category).reduce((tot, curr) => tot + curr.Quantity, 0);
     });
-
-    if (type === "farmers") {
-        displayFarmers(data);
-    } else if (type === "purchases") {
-        displayPurchases(data);
-    } else if (type === "sales") {
-        displaySales(data);
-    }
-}
-
-
-
-async function checkLowStock() {
-    const inventory = await fetchData("./data/inventory.json");
-    const lowStockItems = inventory.filter(item => item.stock < 50);
-
-    if (lowStockItems.length > 0) {
-        const items = lowStockItems.map(item => `${item.category} (Stock: ${item.stock})`).join("\n");
-        alert(`Low Stock Alert:\n${items}`);
-    }
-}
-
-
-function displaySales(sales) {
-    const html = `
-        <div class="card">
-            <h2>Sales</h2>
-            <ul>
-                ${sales.map(s => `<li>${s.customerName} bought ${s.quantity} units of ${s.category} for ${formatCurrency(s.totalPrice)}</li>`).join('')}
-            </ul>
-            <button onclick="addSale()">Add Sale</button>
-        </div>
-    `;
-    updateContent(html);
+    // Clear previous chart instances if they exist
+    if(window.barChartInstance){
+        window.barChartInstance.destroy();}
+    const ctxBar =document.getElementById(`salesBarChart`).getContext(`2d`);
+    window.barChartInstance=new Chart(ctxBar,{
+        type: `bar`,
+        data:{ labels:categories,datasets:[{
+            label:`Total Sales by Packs`,data:data,borderColor:["#EC5B24","#2497EC","#24EC61" ],backgroundColor:["#DA310B","#0C276A","#1BA038"]
+            ,borderWidth:1
+        }]
+        ,options:{scales:{y:{beginAtZero:true}}}}
+    });
 }
 
 

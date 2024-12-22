@@ -1,6 +1,27 @@
 [
-    { "itemId": 1,"category":"Fresh", "stock": 200, "pricePerUnit": 2.5,"ReorderLevel":50,"RestockDate":"2024-12-24","Location":"Mugla-Merkez" },
-    { "itemId": 2,"category":"Organic", "stock": 40, "pricePerUnit": 5.0,"ReorderLevel":50,"RestockDate":"2024-12-24","Location":"Mugla-Kotekli" },
-    { "itemId": 3,"category":"Frozen", "stock": 30, "pricePerUnit": 10.0 ,"ReorderLevel":50,"RestockDate":"2024-12-24","Location":"Mugla-Fethiye"}
+        {
+            "itemId": 1,
+            "category": "Fresh",
+            "stock": 125,
+            "ReorderLevel": 50,
+            "RestockDate": "2024-12-15T16:29:28.547Z",
+            "Location": "Mugla-Merkez"
+        },
+        {
+            "itemId": 2,
+            "category": "Organic",
+            "stock": 25,
+            "ReorderLevel": 50,
+            "RestockDate": "2024-12-15T16:29:28.547Z",
+            "Location": "Mugla-Kotekli"
+        },
+        {
+            "itemId": 3,
+            "category": "Frozen",
+            "stock": 0,
+            "ReorderLevel": 50,
+            "RestockDate": "2024-12-15T16:29:28.547Z",
+            "Location": "Mugla-Fethiye"
+        }]
     
-]
+

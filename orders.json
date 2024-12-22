@@ -1,4 +1,42 @@
 [
-    {"orderId":1,"CusName":"Ezzaldeen","CusContact":"123-123-123","CusShippingInfo":"Turkiye-Mugla","Products":[{"Pack":"Small","Category":"Frozen","Quantity":5,"Price":5},{"Pack":"Large","Category":"Organic","Quantity":5,"Price":5},{"Pack":"Extra Large","Category":"Frozen","Quantity":5,"Price":5}],"TotalPrice":200,"Status":"Delivered","Date":"2024-12-14T16:29:28.547Z"},
-    {"orderId":2,"CusName":"Ezzaldeen","CusContact":"123-123-123","CusShippingInfo":"Turkiye-Mugla","Products":[{"Pack":"Small","Category":"Organic","Quantity":5,"Price":5},{"Pack":"Large","Category":"Fresh","Quantity":5,"Price":5},{"Pack":"Extra Large","Category":"Organic","Quantity":5,"Price":5}],"TotalPrice":200,"Status":"Delivered","Date":"2024-12-15T16:29:28.547Z"}
+    {
+        "orderId": 1,
+        "CusName": "Ezzaldeen Younis",
+        "CusContact": "222-666-666",
+        "CusShippingInfo": "Mugla-Kotekli",
+        "Products": [
+            {
+                "Pack": "Extra Large",
+                "Category": "Organic",
+                "Quantity": 50,
+                "Price": 22
+            }
+        ],
+        "TotalPrice": 1100,
+        "Status": "Processed",
+        "Date": "2024-12-21T22:35:47.736Z"
+    },
+    {
+        "orderId": 2,
+        "CusName": "Ahmet Younis",
+        "CusContact": "333-666-333",
+        "CusShippingInfo": "mugla-fethiye",
+        "Products": [
+            {
+                "Pack": "Large",
+                "Category": "Fresh",
+                "Quantity": 25,
+                "Price": 11.5
+            },
+            {
+                "Pack": "Extra Large",
+                "Category": "Organic",
+                "Quantity": 25,
+                "Price": 22
+            }
+        ],
+        "TotalPrice": 837.5,
+        "Status": "Pending",
+        "Date": "2024-12-21T22:37:07.034Z"
+    }
 ]

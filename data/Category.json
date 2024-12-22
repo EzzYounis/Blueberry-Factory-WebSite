@@ -1,9 +1,44 @@
 [
-    { "id": 1, "name": "Small", "weight": 100,"pricePerUnit": 2.5 ,"stock":0},
-    { "id": 2, "name": "Medium", "weight": 250,"pricePerUnit": 2.5,"stock":0 },
-    { "id": 3, "name": "Large", "weight": 500,"pricePerUnit": 2.5,"stock":0 },
-    { "id": 4, "name": "Extra Large", "weight": 1000,"pricePerUnit": 2.5,"stock":0},
-    { "id": 5, "name": "Family Pack", "weight": 2000,"pricePerUnit": 2.5,"stock":0},
-    { "id": 6, "name": "Bulk Pack", "weight": 5000,"pricePerUnit": 2.5,"stock":0}
-
+    {
+        "id": 1,
+        "name": "Small",
+        "weight": 0.1,
+        "pricePerUnit": 2.5,
+        "stock": 0
+    },
+    {
+        "id": 2,
+        "name": "Medium",
+        "weight": 0.25,
+        "pricePerUnit": 6,
+        "stock": 0
+    },
+    {
+        "id": 3,
+        "name": "Large",
+        "weight": 0.5,
+        "pricePerUnit": 11.5,
+        "stock": 50
+    },
+    {
+        "id": 4,
+        "name": "Extra Large",
+        "weight": 1,
+        "pricePerUnit": 22,
+        "stock": 125
+    },
+    {
+        "id": 5,
+        "name": "Family Pack",
+        "weight": 2,
+        "pricePerUnit": 40,
+        "stock": 0
+    },
+    {
+        "id": 6,
+        "name": "Bulk Pack",
+        "weight": 2,
+        "pricePerUnit": 77,
+        "stock": 0
+    }
 ]
