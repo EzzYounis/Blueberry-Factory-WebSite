@@ -75,15 +75,7 @@ let TotalExpenses=calculateexpenses("AllTime");
 let TotalRevenue=0;
 
 
-
-
-async function calculate_revenue(){
-    Orders= await fetchData("/orders.json")
-    TotalRevenue=0;
-    Orders.forEach(order=>TotalRevenue+=order.TotalPrice)
-
-}
-calculate_revenue();
+TotalRevenue=calculate_revenue("AllTime")
 
 // Creates a notification
 function createToast(message){
@@ -242,7 +234,9 @@ function saveFarmer() {
 function deletefarmer(event){
     const farmerid = parseInt(event.target.getAttribute("data-id"))
     farmerslist=farmerslist.filter(farmer=>farmer.id!==farmerid)
+    updateStorage();
     loadFarmers();
+    
 }
 function ConfirmEdit(farmer) {
 
@@ -261,6 +255,7 @@ function ConfirmEdit(farmer) {
         createToast("This ID Already used")
         return;
     };
+    purchaseslist.filter(Purchases=>Purchases.farmerId===farmer.id).forEach(purchase=> purchase.farmerId=newid)
     farmer.id=newid;
     farmer.name=name;
     farmer.contact=contact;
@@ -573,12 +568,56 @@ function savePurchase() {
     
 }
 function calculateexpenses(timeperiod){
-    const enddate=new Date();
+    const todayDate=new Date();
     let totalExpenses=0;
+    let filteredlist;
     if(timeperiod==="AllTime"){
         purchaseslist.forEach(p=>totalExpenses=totalExpenses+p.totalCost)
         return totalExpenses
+    }else if (timeperiod==="month"){
+        filteredlist=purchaseslist.filter(purchase=>todayDate.getFullYear()===new Date(purchase.date).getFullYear() && todayDate.getMonth()===new Date(purchase.date).getMonth())
+        filteredlist.forEach(p=>totalExpenses=totalExpenses+p.totalCost)
+        return totalExpenses
+    }else if (timeperiod==="threemonth"){
+        filteredlist=purchaseslist.filter(purchase=>todayDate.getFullYear()===new Date(purchase.date).getFullYear() && (todayDate.getMonth()-new Date(purchase.date).getMonth()<=3))
+        filteredlist.forEach(p=>totalExpenses=totalExpenses+p.totalCost)
+
+        return totalExpenses
+    }else if (timeperiod==="sixmonth"){
+        filteredlist=purchaseslist.filter(purchase=>todayDate.getFullYear()===new Date(purchase.date).getFullYear() && (todayDate.getMonth()-new Date(purchase.date).getMonth()<=6))
+        filteredlist.forEach(p=>totalExpenses=totalExpenses+p.totalCost)
+        return totalExpenses
     }
+    
+}
+function calculate_revenue(timeperiod){
+    const todayDate=new Date();
+    let totalRevenue=0;
+    let filteredlist;
+    console.log(timeperiod)
+    if(timeperiod==="AllTime"){
+        Orders.forEach(order=>TotalRevenue+=order.TotalPrice)
+        return totalRevenue
+    }else if (timeperiod==="month"){
+        
+        filteredlist=Orders.filter(order=>todayDate.getFullYear()===new Date(order.Date).getFullYear() && todayDate.getMonth()===new Date(order.Date).getMonth())
+        
+        filteredlist.forEach(o=>totalRevenue=totalRevenue+o.TotalPrice)
+        console.log(filteredlist)
+        console.log(totalRevenue)
+        return totalRevenue
+    }else if (timeperiod==="threemonth"){
+        
+        filteredlist=Orders.filter(order=>todayDate.getFullYear()===new Date(order.Date).getFullYear() && (todayDate.getMonth()-new Date(order.Date).getMonth()<=3))
+        filteredlist.forEach(o=>totalRevenue=totalRevenue+o.TotalPrice)
+        return totalRevenue
+    }else if (timeperiod==="sixmonth"){
+        filteredlist=Orders.filter(order=>todayDate.getFullYear()===new Date(order.Date).getFullYear() && (todayDate.getMonth()-new Date(order.Date).getMonth()<=6))
+        filteredlist.forEach(o=>totalRevenue=totalRevenue+o.TotalPrice)
+        return totalRevenue
+        
+    }
+    
 }
 
 // ------------------- Product Categorization -------------------
@@ -627,32 +666,47 @@ function editCategory(event){
     const PackId = parseInt(event.target.getAttribute("data-id"))
     const Pack=Categories.find(pack=>PackId===pack.id)
     const html =`<div id="editPack-box" class ="add-edit-box">
-    <input type="number" id="price" placeholder="New Price">
+    <input type="number" id="price" placeholder="Price">
+    <input type="text" id="name" placeholder="Name">
+    <input type="number" id="weight" placeholder="Weight">
     <button  id="confirm-Edit">Save Changes </button>
     </div>
     `;
     updateContent(html);
-
+    document.getElementById("price").value=Pack.pricePerUnit;
+    document.getElementById("name").value=Pack.name;
+    document.getElementById("weight").value=Pack.weight
     document.getElementById("confirm-Edit").addEventListener("click",function(){ConfirmEditPack(Pack)})
 }
+
 function ConfirmEditPack(Pack){
-    const newPrice =parseFloat(document.getElementById("price").value.trim());
-    if (newPrice==="") {
-        createToast("Not acceptable values")
+    const name = document.getElementById("name").value.trim();
+    const weight = parseFloat(document.getElementById("weight").value);
+    const pricePerUnit = parseFloat(document.getElementById("price").value);
+   
+    if(name===""|| weight ==="" || pricePerUnit===""){
+        createToast("Please fill all the boxes")
+        return
+    }else if(testprice(weight)||testprice(pricePerUnit)){
+        createToast("only Positive numbers accepted");
         return;
-    }else if (testprice(newPrice)){
-        createToast("The Price Shouldn't contain any Special Chars")
+    }else if (testspecialcharss(name)){
+        createToast("Spiecial Chars not accepted for the name");
         return;
-    }else if (newPrice<=0){
-        createToast("The Price Should Be greater than 0")
-        return;
+    }else if (Pack.name!==name && Categories.findIndex(cate=>cate.name.toLowerCase()===name.toLowerCase())!==-1){
+        createToast("This Category name already in use")
+        return
+    }else if (weight===0 || pricePerUnit===0){
+        createToast("The weight and price should be greater than 0")
+        return
     }
-    Pack.pricePerUnit=newPrice;
-    
+    Pack.name=name;
+    Pack.pricePerUnit=pricePerUnit
+    Pack.weight=weight;
     updateStorage()
-    
-    loadPacking();
+    loadPacking()
 }
+
 function testprice(price){
     specialChars = /[^0-9." "]/;
     return specialChars.test(price);
@@ -1183,7 +1237,6 @@ function addSale() {
                     
                 </div>
                 <button onclick="addProduct()">Add Product</button>
-                <input type="date" id="PurchaseDate" placeholder="Purchase Date">
                 <button onclick="saveSale()">Save</button>
             </div>
         </div>
@@ -1321,6 +1374,12 @@ function financialAnalysis(){
     const html=`<div class ="add-edit-box">
     <h2>Enter The Tax Rate</h2>
     <input type="number" id ="tax" placeholder="Tax rate">
+    <select>
+                <option value="">Select Time Period</option>
+                <option value="month">Month</option>
+                <option value="threemonth">3 Moths</option>
+                <option value="sixmonth">6 Months</option>
+                </select>
     <button onclick="calculatefinancialAnalysis()">Calculate</button>
     </div>
     `
@@ -1328,7 +1387,8 @@ function financialAnalysis(){
 }
 function calculatefinancialAnalysis(){
     let taxrate =document.getElementById("tax").value;
-    if(taxrate===""){
+    const timeperiod=document.querySelector("select").value;
+    if(taxrate==="" || timeperiod===""){
         createToast("Fill The Box")
         return
     }else if (testprice(taxrate)){
@@ -1338,12 +1398,16 @@ function calculatefinancialAnalysis(){
         createToast("The Tax Rate Should be between 0 and 100")
         return
     }
+    const timetotalExpenses= calculateexpenses(timeperiod);
+    const timetotalrevenue=calculate_revenue(timeperiod)
+    
     taxrate=parseFloat(taxrate/100);
     
-    const html=`<div id = "FinancialAnalysis"><p>Total Income : ${TotalRevenue}</p>
-    <p>Total Expenses : ${TotalExpenses}</p>
-    <p>Total Tax : ${formatCurrency(TotalRevenue*taxrate)}</p>
-    <p>Net Profit : ${TotalRevenue-TotalExpenses-TotalRevenue*0.1}</p>
+    const html=`<div id = "FinancialAnalysis"><h2>FinancialAnalysis for the last ${timeperiod.toUpperCase()}</h2>
+    <p>Total Income : ${timetotalrevenue}</p>
+    <p>Total Expenses : ${timetotalExpenses}</p>
+    <p>Total Tax : ${formatCurrency(timetotalrevenue*taxrate)}</p>
+    <p>Net Profit : ${timetotalrevenue-timetotalExpenses-timetotalrevenue*taxrate}</p>
     </div>
     `
     updateContent(html)
@@ -1373,7 +1437,7 @@ async function generateReports() {
             <p>Expenses:${formatCurrency(TotalExpenses)}$</p>
             <p>Total Tax:${formatCurrency(Tax)}$</p>
             <p>Net Profit :${formatCurrency(netProfit)}$</p>
-            ${Object.keys(demandlist).map(category=> `<p> category: ${category} Aold ${demandlist[category].total} kg`.join(""))}
+            ${Object.keys(demandlist).map(category=> `<p> category: ${category} Sold ${demandlist[category].total} kg`).join("")}
             ${inventory.map(item=>`<p> Category: ${item.category}  Remaining Stock: ${item.stock} Kg`).join("")}
             </div>
         </div>
@@ -1391,7 +1455,7 @@ function addNavListeners() {
     document.getElementById("inventoryManagement").addEventListener("click", loadInventory);
     document.getElementById("catogaryPackingManagement").addEventListener("click", loadPacking)
     document.getElementById("salesManagement").addEventListener("click", loadOrders);
-    document.getElementById("egenerateReports").addEventListener("click", generateReports);
+    document.getElementById("generateReports").addEventListener("click", generateReports);
     document.getElementById("financialAnalysis").addEventListener("click", financialAnalysis);
     
     
