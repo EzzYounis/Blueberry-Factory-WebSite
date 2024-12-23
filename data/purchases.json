@@ -1,4 +1,4 @@
 [
-    { "purchaseId": 1001, "farmerId": 1, "date": "2024-12-14T16:29:28.547Z", "category":"Organic","quantity": 100, "pricePerKg": 5.0, "totalCost": 500 },
-    { "purchaseId": 1002, "farmerId": 2, "date": "2024-10-13T12:34:56.789Z","category":"Fresh", "quantity": 200, "pricePerKg": 4.5, "totalCost": 900 }
+    { "purchaseId": 1001, "farmerId": 1,"farmername":"Ezzaldeen", "date": "2024-12-14T16:29:28.547Z", "category":"Organic","quantity": 100, "pricePerKg": 5.0, "totalCost": 500 },
+    { "purchaseId": 1002, "farmerId": 2,"farmername":"Jane Smith", "date": "2024-10-13T12:34:56.789Z","category":"Fresh", "quantity": 200, "pricePerKg": 4.5, "totalCost": 900 }
 ]

@@ -255,7 +255,7 @@ function ConfirmEdit(farmer) {
         createToast("This ID Already used")
         return;
     };
-    purchaseslist.filter(Purchases=>Purchases.farmerId===farmer.id).forEach(purchase=> purchase.farmerId=newid)
+    purchaseslist.filter(Purchases=>Purchases.farmerId===farmer.id).forEach(purchase=> {purchase.farmerId=newid; purchase.farmername=name})
     farmer.id=newid;
     farmer.name=name;
     farmer.contact=contact;
@@ -314,16 +314,16 @@ const dateString = date.toISOString();
             <button onclick="purchaseExpenses()">Expenses</button>
             <div id="PSecond-part">
             <ul>
-                ${purchaseslist.map(purchase =>{let farmer=farmerslist.find(f=>f.id===purchase.farmerId) 
-                    return `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
+                ${purchaseslist.map(purchase =>
+                    `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
         <span> Farmer ID:${purchase.farmerId} </span>
-        <span> Farmer Name:${farmer.name} </span>
+        <span> Farmer Name:${purchase.farmername} </span>
         <span> Date:${formatDate(purchase.date)} </span> 
         <span> Category:${purchase.category} </span> 
         <span> Quantity:${purchase.quantity} Kg </span>
         <span> pricePerKg:${purchase.pricePerKg} $/kg </span>
         <span> totalCost:${purchase.totalCost} $</span>
-            `}).join("")}
+            `).join("")}
             </ul>
             <button onclick="addPurchase()">Add Purchase</button>
             <h3>Total Expenses</h3>
@@ -389,16 +389,16 @@ function sortbytime(){
     let timeperiodExpenses=0
     filteredList.forEach(purchase=>timeperiodExpenses+=purchase.totalCost)
     listingDiv.innerHTML = `<ul>
-        ${filteredList.map(purchase =>{let farmer=farmerslist.find(f=>f.id===purchase.farmerId)
-            return `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
+        ${filteredList.map(purchase =>
+            `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
 <span> Farmer ID:${purchase.farmerId} </span>
-<span> Farmer Name:${farmer.name} </span>
+<span> Farmer Name:${purchase.farmername} </span>
 <span> Date:${formatDate(purchase.date)} </span> 
 <span> Quantity:${purchase.quantity} Kg </span>
 <span> pricePerKg:${purchase.pricePerKg} $/kg </span>
 <span> totalCost:${purchase.totalCost} $</span>
 
-    `}).join("")}
+    `).join("")}
     <h3>Time Period Expenses</h3>
             <span> :${timeperiodExpenses} $</span>
     </ul>
@@ -417,16 +417,16 @@ function sortPurchases(order){
     }
     listingDiv.innerHTML = `
             <ul>
-                ${sortedlist.map(purchase =>{let farmer=farmerslist.find(f=>f.id===purchase.farmerId) 
-                    return `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
+                ${sortedlist.map(purchase => 
+                     `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
         <span> Farmer ID:${purchase.farmerId} </span>
-        <span> Farmer Name:${farmer.name} </span>
+        <span> Farmer Name:${purchase.farmername} </span>
         <span> Date:${formatDate(purchase.date)} </span>
         <span> Category:${purchase.category} </span>  
         <span> Quantity:${purchase.quantity} Kg </span>
         <span> pricePerKg:${purchase.pricePerKg} $/kg </span>
         <span> totalCost:${purchase.totalCost} $</span>
-            `}).join("")}
+            `).join("")}
             </ul>
             
     `;
@@ -456,15 +456,15 @@ function sortbyfarmer(){
     
     listingDiv.innerHTML = `
     <ul>
-        ${resultpurchases.map(purchase =>{let farmer=farmerslist.find(f=>f.id===purchase.farmerId)
-            return `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
+        ${resultpurchases.map(purchase =>
+             `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
 <span> Farmer ID:${purchase.farmerId} </span>
-<span> Farmer Name:${farmer.name} </span>
+<span> Farmer Name:${purchase.farmername} </span>
 <span> Date:${purchase.date} </span> 
 <span> Quantity:${purchase.quantity} Kg </span>
 <span> pricePerKg:${purchase.pricePerKg} $/kg </span>
 <span> totalCost:${purchase.totalCost} $</span>
-    `}).join("")}
+    `).join("")}
     </ul>
     
 `;  
@@ -481,15 +481,14 @@ function sortbyquantity(order){
     }
     listingDiv.innerHTML = `
             <ul>
-                ${sortedlist.map(purchase =>{let farmer=farmerslist.find(f=>f.id===purchase.farmerId) 
-                    return `<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
+                ${sortedlist.map(purchase =>`<li class="purchases-box"><div><span> Purchase ID:${purchase.purchaseId} </span>
         <span> Farmer ID:${purchase.farmerId} </span>
-        <span> Farmer Name:${farmer.name} </span>
+        <span> Farmer Name:${purchase.farmername} </span>
         <span> Date:${purchase.date} </span> 
         <span> Quantity:${purchase.quantity} Kg </span>
         <span> pricePerKg:${purchase.pricePerKg} $/kg </span>
         <span> totalCost:${purchase.totalCost} $</span>
-            `}).join("")}
+            `).join("")}
             </ul>
             
     `;
@@ -561,7 +560,7 @@ function savePurchase() {
     const purchaseId= purchaseslist.length +1001
     const farmer=farmerslist.find(farmer=>farmer.id===farmerId);
     inventory.find(item=>item.category===category).stock +=quantity
-    purchaseslist.push({purchaseId , farmerId,date,category,quantity,pricePerKg,totalCost})
+    purchaseslist.push({purchaseId , farmerId,farmername:farmer.name,date,category,quantity,pricePerKg,totalCost})
     farmer.Purchases.push(purchaseId)
     loadPurchases(purchaseslist);
     updateStorage()
