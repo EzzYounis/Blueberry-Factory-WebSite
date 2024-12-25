@@ -4,7 +4,7 @@
             "category": "Fresh",
             "stock": 125,
             "ReorderLevel": 50,
-            "RestockDate": "2024-12-15T16:29:28.547Z",
+            "RestockDate": "2024-12-30T16:29:28.547Z",
             "Location": "Mugla-Merkez"
         },
         {
@@ -12,7 +12,7 @@
             "category": "Organic",
             "stock": 25,
             "ReorderLevel": 50,
-            "RestockDate": "2024-12-15T16:29:28.547Z",
+            "RestockDate": "2024-12-28T16:29:28.547Z",
             "Location": "Mugla-Kotekli"
         },
         {
@@ -20,7 +20,7 @@
             "category": "Frozen",
             "stock": 0,
             "ReorderLevel": 50,
-            "RestockDate": "2024-12-15T16:29:28.547Z",
+            "RestockDate": "2024-12-29T16:29:28.547Z",
             "Location": "Mugla-Fethiye"
         }]
     

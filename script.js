@@ -1403,10 +1403,56 @@ function calculatefinancialAnalysis(){
 }
 // ------------------- Reports -------------------
 
+function generateReports(){
+    const html=`<div class ="add-edit-box">
+    <h2>Enter The Tax Rate</h2>
+    <input type="number" id ="tax" placeholder="Tax rate">
+    <select>
+                <option value="">Select Time Period</option>
+                <option value="month">Month</option>
+                <option value="threemonth">3 Moths</option>
+                <option value="sixmonth">6 Months</option>
+                </select>
+    <button onclick="showgenerateReports()">Calculate</button>
+    </div>
+    `
+    updateContent(html)
+}
+async function showgenerateReports() {
+    let taxrate =document.getElementById("tax").value;
+    const timeperiod=document.querySelector("select").value;
+    if(taxrate==="" || timeperiod===""){
+        createToast("Fill The Box")
+        return
+    }else if (testprice(taxrate)){
+        createToast("spiecial Chars not accepted")
+        return
+    }else if (taxrate<=0 || taxrate>=100){
+        createToast("The Tax Rate Should be between 0 and 100")
+        return
+    }
+    const timetotalExpenses= calculateexpenses(timeperiod);
+    const timetotalrevenue=calculate_revenue(timeperiod)
+    
+    taxrate=parseFloat(taxrate/100);
 
-async function generateReports() {
+
+    let filteredOrders;
+        const todayDate=new Date();
+        let totalExpenses=0;
+        let filteredlist;
+         if (timeperiod==="month"){
+            filteredOrders=Orders.filter(order=>todayDate.getFullYear()===new Date(order.Date).getFullYear() && todayDate.getMonth()===new Date(order.Date).getMonth())
+            
+        }else if (timeperiod==="threemonth"){
+            filteredOrders=Orders.filter(order=>todayDate.getFullYear()===new Date(order.Date).getFullYear() && (todayDate.getMonth()-new Date(order.Date).getMonth()<=3))
+            
+        }else if (timeperiod==="sixmonth"){
+            filteredOrders=Orders.filter(order=>todayDate.getFullYear()===new Date(order.Date).getFullYear() && (todayDate.getMonth()-new Date(order.Date).getMonth()<=6))
+            
+        }
     let demandlist={};
-    Orders.forEach(order=>order.Products.forEach(product=>{
+    filteredOrders.forEach(order=>order.Products.forEach(product=>{
         if(!demandlist[product.Category]){
             demandlist[product.Category]={total:0}
         }
@@ -1414,7 +1460,7 @@ async function generateReports() {
         
     }))
     let demandlistpacks={};
-    Orders.forEach(order=>order.Products.forEach(product=>{
+    filteredOrders.forEach(order=>order.Products.forEach(product=>{
         if(!demandlistpacks[product.Pack]){
             demandlistpacks[product.Pack]={total:0}
         }
