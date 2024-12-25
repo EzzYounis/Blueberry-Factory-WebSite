@@ -60,7 +60,6 @@ function isdataloaded(list){
 
 async function dataloadtest(){
     if(!isdataloaded(listsnames)){
-        console.log("new")
          await loadData()
         saveToLocalstorage()
     }else{
@@ -539,7 +538,6 @@ function savePurchase() {
     const category = document.getElementById("categoryselect").value;
     let quantity = document.getElementById("purchaseQuantity").value;
     let pricePerKg = document.getElementById("purchasePricePerKg").value;
-    console.log(farmerId)
     const date=new Date()
     
     const totalCost = quantity * pricePerKg;
@@ -593,17 +591,14 @@ function calculate_revenue(timeperiod){
     const todayDate=new Date();
     let totalRevenue=0;
     let filteredlist;
-    console.log(timeperiod)
     if(timeperiod==="AllTime"){
-        Orders.forEach(order=>TotalRevenue+=order.TotalPrice)
+        Orders.forEach(order=>totalRevenue+=order.TotalPrice)
         return totalRevenue
     }else if (timeperiod==="month"){
         
         filteredlist=Orders.filter(order=>todayDate.getFullYear()===new Date(order.Date).getFullYear() && todayDate.getMonth()===new Date(order.Date).getMonth())
         
         filteredlist.forEach(o=>totalRevenue=totalRevenue+o.TotalPrice)
-        console.log(filteredlist)
-        console.log(totalRevenue)
         return totalRevenue
     }else if (timeperiod==="threemonth"){
         
@@ -1000,7 +995,6 @@ function inventoryTime(timeperiod){//this generates a list of the purchases for 
 }
 function demandForecast(list){
     let demandlist={};
-    console.log(Categories)
     list.forEach(order=>order.Products.forEach(product=>{
         if(!demandlist[product.Category]){
             demandlist[product.Category]={total:0,count:0}
@@ -1008,7 +1002,6 @@ function demandForecast(list){
         demandlist[product.Category].total+=product.Quantity*Categories.find(cate=>cate.name===product.Pack).weight
         demandlist[product.Category].count+=1;
     }))
-    console.log(demandlist)
     let forecasted=[]
     Object.keys(demandlist).forEach(category=>{
         const average=demandlist[category].total/demandlist[category].count
@@ -1018,7 +1011,6 @@ function demandForecast(list){
             ,prediction:prediction
         })
     })
-    console.log(forecasted)
     let listingDiv=document.getElementById("ISecond-part")
     listingDiv.innerHTML=`<ul>
                 ${forecasted.map(item => `
@@ -1208,9 +1200,7 @@ function Updatestatus(event){
 }
 
 
-/**
- * Render a form to add a sale.
- */
+
 function addSale() {
     const html = `
         <div class="card">
@@ -1420,23 +1410,31 @@ async function generateReports() {
         if(!demandlist[product.Category]){
             demandlist[product.Category]={total:0}
         }
-        demandlist[product.Category].total+= product.Quantity
+        demandlist[product.Category].total+= product.Quantity*(Categories.find(cate=>cate.name===product.Pack).weight)
+        
+    }))
+    let demandlistpacks={};
+    Orders.forEach(order=>order.Products.forEach(product=>{
+        if(!demandlistpacks[product.Pack]){
+            demandlistpacks[product.Pack]={total:0}
+        }
+        demandlistpacks[product.Pack].total+= product.Quantity
         
     }))
     
     
     const Tax=TotalRevenue*0.1
     const netProfit= TotalRevenue-TotalExpenses-Tax
-    console.log(inventory)
     const html = `
         <div class="card">
             <div id = "Report">
-            <h2>End-Period Report</h2>
+            <h2>All-Time Report</h2>
             <p>Total Revenue:${formatCurrency(TotalRevenue)}$</p>
             <p>Expenses:${formatCurrency(TotalExpenses)}$</p>
             <p>Total Tax:${formatCurrency(Tax)}$</p>
             <p>Net Profit :${formatCurrency(netProfit)}$</p>
             ${Object.keys(demandlist).map(category=> `<p> category: ${category} Sold ${demandlist[category].total} kg`).join("")}
+            ${Object.keys(demandlistpacks).map(pack=> `<p> Pack: ${pack} Sold ${demandlistpacks[pack].total}`).join("")}
             ${inventory.map(item=>`<p> Category: ${item.category}  Remaining Stock: ${item.stock} Kg`).join("")}
             </div>
         </div>
@@ -1477,7 +1475,6 @@ function renderCharts() {
     const data = categories.map(category => {
         return slls.filter(sale => sale.Pack === category).reduce((tot, curr) => tot + curr.Quantity, 0);
     });
-    // Clear previous chart instances if they exist
     if(window.barChartInstance){
         window.barChartInstance.destroy();}
     const ctxBar =document.getElementById(`salesBarChart`).getContext(`2d`);
