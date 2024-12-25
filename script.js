@@ -1469,14 +1469,14 @@ async function showgenerateReports() {
     }))
     
     
-    const Tax=TotalRevenue*0.1
-    const netProfit= TotalRevenue-TotalExpenses-Tax
+    const Tax=timetotalrevenue*taxrate
+    const netProfit= timetotalrevenue-timetotalExpenses-Tax
     const html = `
         <div class="card">
             <div id = "Report">
             <h2>All-Time Report</h2>
-            <p>Total Revenue:${formatCurrency(TotalRevenue)}$</p>
-            <p>Expenses:${formatCurrency(TotalExpenses)}$</p>
+            <p>Total Revenue:${formatCurrency(timetotalrevenue)}$</p>
+            <p>Expenses:${formatCurrency(timetotalExpenses)}$</p>
             <p>Total Tax:${formatCurrency(Tax)}$</p>
             <p>Net Profit :${formatCurrency(netProfit)}$</p>
             ${Object.keys(demandlist).map(category=> `<p> category: ${category} Sold ${demandlist[category].total} kg`).join("")}
